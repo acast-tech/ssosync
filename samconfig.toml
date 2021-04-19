@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "ssosync-lambda"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1cc4cj9luihfj"
+s3_prefix = "ssosync-lambda"
+region = "eu-west-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "ScheduleExpression=\"rate(15 minutes)\" LogLevel=\"warn\" LogFormat=\"json\" GoogleUserMatch=\"\" GoogleGroupMatch=\"\" SyncMethod=\"groups\""
