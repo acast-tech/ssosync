@@ -171,8 +171,6 @@ func (s *syncGSuite) SyncGroups(query string) error {
 		return err
 	}
 
-	correlatedGroups := make(map[string]*aws.Group)
-
 	for _, g := range googleGroups {
 		if s.ignoreGroup(g.Email) || !s.includeGroup(g.Email) {
 			continue
@@ -192,7 +190,6 @@ func (s *syncGSuite) SyncGroups(query string) error {
 
 		if gg != nil {
 			log.Debug("Found group")
-			correlatedGroups[gg.DisplayName] = gg
 			group = gg
 		} else {
 			log.Info("Creating group in AWS")
@@ -200,7 +197,6 @@ func (s *syncGSuite) SyncGroups(query string) error {
 			if err != nil {
 				return err
 			}
-			correlatedGroups[newGroup.DisplayName] = newGroup
 			group = newGroup
 		}
 
@@ -458,7 +454,7 @@ func (s *syncGSuite) getGoogleGroupsAndUsers(googleGroups []*admin.Group) ([]*ad
 
 	for _, g := range googleGroups {
 
-		if s.ignoreGroup(g.Name) {
+		if s.ignoreGroup(g.Name) || !s.includeGroup(g.Name) {
 			continue
 		}
 
@@ -680,23 +676,36 @@ func DoSync(ctx context.Context, cfg *config.Config) error {
 
 	c := New(cfg, awsClient, googleClient)
 
-	log.WithField("sync_method", cfg.SyncMethod).Info("syncing")
-	if cfg.SyncMethod == config.DefaultSyncMethod {
-		err = c.SyncGroupsUsers(cfg.GroupMatch)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = c.SyncUsers(cfg.UserMatch)
-		if err != nil {
-			return err
-		}
 
-		err = c.SyncGroups(cfg.GroupMatch)
-		if err != nil {
-			return err
-		}
+	// TODO: by default, use sync method=users_groups. Skip the other method for now
+	// until we can do group and user name match.
+	log.WithField("sync_method", cfg.SyncMethod).Info("syncing")
+	err = c.SyncUsers(cfg.UserMatch)
+	if err != nil {
+		return err
 	}
+
+	err = c.SyncGroups(cfg.GroupMatch)
+	if err != nil {
+		return err
+	}
+
+	// if cfg.SyncMethod == config.DefaultSyncMethod {
+	// 	err = c.SyncGroupsUsers(cfg.GroupMatch)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	err = c.SyncUsers(cfg.UserMatch)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	err = c.SyncGroups(cfg.GroupMatch)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }

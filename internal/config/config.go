@@ -43,7 +43,7 @@ const (
 	// DefaultGoogleCredentials is the default credentials path
 	DefaultGoogleCredentials = "credentials.json"
 	// DefaultSyncMethod is the default sync method to use.
-	DefaultSyncMethod = "groups"
+	DefaultSyncMethod = "users_groups"
 )
 
 // New returns a new Config
