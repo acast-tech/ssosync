@@ -8,4 +8,4 @@ s3_prefix = "ssosync-lambda"
 region = "eu-west-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "ScheduleExpression=\"rate(15 minutes)\" LogLevel=\"warn\" LogFormat=\"json\" GoogleUserMatch=\"\" GoogleGroupMatch=\"\" SyncMethod=\"groups\""
+parameter_overrides = "ScheduleExpression=\"rate(30 minutes)\" LogLevel=\"warn\" LogFormat=\"json\" GoogleUserMatch=\"\" GoogleGroupMatch=\"\" SyncMethod=\"users_groups\""
