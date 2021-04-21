@@ -116,7 +116,7 @@ Flags:
       --include-groups strings      include only these Google groups
       --log-format string           log format (default "text")
       --log-level string            log level (default "info")
-  -s, --sync-method string          Select the sync method to use (users_groups|groups) (default "groups")
+  -s, --sync-method string          Select the sync method to use (users_groups|groups) (default "user_groups")
   -m, --user-match string           Google users query parameter, example: 'name:John* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users
   -v, --version                     version for ssosync
 ```
