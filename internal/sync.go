@@ -25,6 +25,8 @@ import (
 	"github.com/awslabs/ssosync/internal/google"
 	"github.com/hashicorp/go-retryablehttp"
 
+	"regexp"
+
 	log "github.com/sirupsen/logrus"
 	admin "google.golang.org/api/admin/directory/v1"
 )
@@ -164,7 +166,8 @@ func (s *syncGSuite) SyncUsers(query string) error {
 //  name:Admin* email:aws-*
 //  email:aws-*
 func (s *syncGSuite) SyncGroups(query string) error {
-
+	// 1. query google groups from google directory, in our case, we ask for all groups.
+	// 2. loop all those google groups, if it should be synced to aws, sync it.
 	log.WithField("query", query).Debug("get google groups")
 	googleGroups, err := s.google.GetGroups(query)
 	if err != nil {
@@ -732,10 +735,13 @@ func (s *syncGSuite) ignoreGroup(name string) bool {
 
 func (s *syncGSuite) includeGroup(name string) bool {
 	for _, g := range s.cfg.IncludeGroups {
-		if g == name {
+		r, err := regexp.Compile(g)
+		if err != nil {
+			continue
+		}
+		if r.MatchString(name) {
 			return true
 		}
 	}
-
 	return false
 }
