@@ -17,7 +17,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/awslabs/ssosync/internal/aws"
@@ -245,92 +244,6 @@ func (s *syncGSuite) SyncGroups(query string) error {
 	}
 
 	return nil
-}
-
-// getGoogleGroupsAndUsers return a list of google users members of googleGroups
-// and a map of google groups and its users' list
-func (s *syncGSuite) getGoogleGroupsAndUsers(googleGroups []*admin.Group) ([]*admin.User, map[string][]*admin.User, error) {
-	gUsers := make([]*admin.User, 0)
-	gGroupsUsers := make(map[string][]*admin.User)
-
-	gUniqUsers := make(map[string]*admin.User)
-
-	for _, g := range googleGroups {
-
-		if s.ignoreGroup(g.Name) || !s.includeGroup(g.Name) {
-			continue
-		}
-
-		log := log.WithFields(log.Fields{"group": g.Name})
-
-		log.Debug("get group members from google")
-		groupMembers, err := s.google.GetGroupMembers(g)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		log.Debug("get users")
-		membersUsers := make([]*admin.User, 0)
-
-		for _, m := range groupMembers {
-
-			if s.ignoreUser(m.Email) {
-				log.WithField("id", m.Email).Debug("ignoring user")
-				continue
-			}
-
-			log.WithField("id", m.Email).Debug("get user")
-			q := fmt.Sprintf("email:%s", m.Email)
-			u, err := s.google.GetUsers(q) // TODO: implement GetUser(q)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			membersUsers = append(membersUsers, u[0])
-
-			_, ok := gUniqUsers[m.Email]
-			if !ok {
-				gUniqUsers[m.Email] = u[0]
-			}
-		}
-		gGroupsUsers[g.Name] = membersUsers
-	}
-
-	for _, user := range gUniqUsers {
-		gUsers = append(gUsers, user)
-	}
-
-	return gUsers, gGroupsUsers, nil
-}
-
-// getAWSGroupsAndUsers return a list of google users members of googleGroups
-// and a map of google groups and its users' list
-func (s *syncGSuite) getAWSGroupsAndUsers(awsGroups []*aws.Group, awsUsers []*aws.User) (map[string][]*aws.User, error) {
-	awsGroupsUsers := make(map[string][]*aws.User)
-
-	for _, awsGroup := range awsGroups {
-
-		users := make([]*aws.User, 0)
-		log := log.WithFields(log.Fields{"group": awsGroup.DisplayName})
-
-		log.Debug("get group members from aws")
-		// NOTE: AWS has not implemented yet some method to get the groups members https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		// so, we need to check each user in each group which are too many unnecessary API calls
-		for _, user := range awsUsers {
-
-			log.Debug("checking if user is member of")
-			found, err := s.aws.IsUserInGroup(user, awsGroup)
-			if err != nil {
-				return nil, err
-			}
-			if found {
-				users = append(users, user)
-			}
-		}
-
-		awsGroupsUsers[awsGroup.DisplayName] = users
-	}
-	return awsGroupsUsers, nil
 }
 
 // DoSync will create a logger and run the sync with the paths
