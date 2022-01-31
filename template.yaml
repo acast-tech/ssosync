@@ -83,7 +83,7 @@ Resources:
     Properties:
       Runtime: go1.x
       Handler: dist/ssosync_linux_amd64/ssosync
-      Timeout: 300
+      Timeout: 900
       Environment:
         Variables:
           SSOSYNC_LOG_LEVEL: !Ref LogLevel
