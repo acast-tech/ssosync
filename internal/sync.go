@@ -216,30 +216,17 @@ func (s *syncGSuite) SyncGroups(query string) error {
 			}
 		}
 
-		for _, u := range s.users {
-			log.WithField("user", u.Username).Debug("Checking user is in group already")
-			b, err := s.aws.IsUserInGroup(u, group)
-			if err != nil {
-				return err
+		// create []aws.User and send with PatchGroupMembers
+		patchList := []*aws.User{}
+		for _, user := range s.users {
+			log.WithField("user", user).Debug("Checking user against google group")
+			if _, ok := memberList[user.Username]; ok {
+				patchList = append(patchList, user)
 			}
-
-			if _, ok := memberList[u.Username]; ok {
-				if !b {
-					log.WithField("user", u.Username).Info("Adding user to group")
-					err := s.aws.AddUserToGroup(u, group)
-					if err != nil {
-						return err
-					}
-				}
-			} else {
-				if b {
-					log.WithField("user", u.Username).Info("Removing user from group")
-					err := s.aws.RemoveUserFromGroup(u, group)
-					if err != nil {
-						return err
-					}
-				}
-			}
+		}
+		_, err = s.aws.PatchGroupMembers(group, patchList)
+		if err != nil {
+			return err
 		}
 	}
 
