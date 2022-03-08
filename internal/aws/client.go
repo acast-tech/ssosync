@@ -43,7 +43,8 @@ const (
 	OperationAdd OperationType = "add"
 
 	// OperationRemove is the remove operation for a patch
-	OperationRemove = "remove"
+	OperationRemove  = "remove"
+	OperationReplace = "replace"
 )
 
 // Client represents an interface of methods used
@@ -63,6 +64,7 @@ type Client interface {
 	GetGroups() ([]*Group, error)
 	UpdateUser(*User) (*User, error)
 	RemoveUserFromGroup(*User, *Group) error
+	PatchGroupMembers(*Group, []*User) (bool, error)
 }
 
 type client struct {
@@ -154,6 +156,47 @@ func (c *client) sendRequest(method string, url string) (response []byte, err er
 	}
 
 	return
+}
+
+func (c *client) PatchGroupMembers(g *Group, userList []*User) (bool, error) {
+	if g == nil {
+		return false, ErrGroupNotSpecified
+	}
+
+	if userList == nil {
+		return false, ErrUserNotSpecified
+	}
+	startURL, err := url.Parse(c.endpointURL.String())
+	if err != nil {
+		return false, err
+	}
+	startURL.Path = path.Join(startURL.Path, "/Groups/", g.ID)
+
+	op := OperationReplace
+
+	memberList := []GroupMemberChangeMember{}
+	for _, user := range userList {
+		memberList = append(memberList, GroupMemberChangeMember{Value: user.ID})
+	}
+
+	groupChange := &GroupMemberChange{
+		Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+		Operations: []GroupMemberChangeOperation{
+			{
+				Operation: string(op),
+				Path:      "members",
+				Members:   memberList,
+			},
+		},
+	}
+
+	log.WithField("change", groupChange).Debug("GroupChange constructed as follows")
+
+	_, err = c.sendRequestWithBody(http.MethodPatch, startURL.String(), *groupChange)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // IsUserInGroup will determine if user (u) is in group (g)
