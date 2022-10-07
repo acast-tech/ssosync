@@ -170,6 +170,7 @@ func (c *client) PatchGroupMembers(g *Group, userList []*User) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	startURL.Path = path.Join(startURL.Path, "/Groups/", g.ID)
 
 	op := OperationReplace

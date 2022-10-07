@@ -215,18 +215,21 @@ func (s *syncGSuite) SyncGroups(query string) error {
 				memberList[m.Email] = m
 			}
 		}
-
-		// create []aws.User and send with PatchGroupMembers
-		patchList := []*aws.User{}
-		for _, user := range s.users {
-			log.WithField("user", user).Debug("Checking user against google group")
-			if _, ok := memberList[user.Username]; ok {
-				patchList = append(patchList, user)
+		if len(memberList) < 100 {
+			// create []aws.User and send with PatchGroupMembers
+			patchList := []*aws.User{}
+			for _, user := range s.users {
+				log.WithField("user", user).Debug("Checking user against google group")
+				if _, ok := memberList[user.Username]; ok {
+					patchList = append(patchList, user)
+				}
 			}
-		}
-		_, err = s.aws.PatchGroupMembers(group, patchList)
-		if err != nil {
-			return err
+			_, err = s.aws.PatchGroupMembers(group, patchList)
+			if err != nil {
+				return err
+			}
+		} else {
+			log.WithField("group", g.Name).Warn("Group has to many members")
 		}
 	}
 
