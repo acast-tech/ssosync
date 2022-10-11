@@ -107,29 +107,29 @@ func (s *syncGSuite) SyncUsers(query string) error {
 		return err
 	}
 
-	for _, u := range googleUsers {
-		if s.ignoreUser(u.PrimaryEmail) {
+	for _, gu := range googleUsers {
+		if s.ignoreUser(gu.PrimaryEmail) {
 			continue
 		}
 
 		ll := log.WithFields(log.Fields{
-			"email": u.PrimaryEmail,
+			"email": gu.PrimaryEmail,
 		})
 
 		ll.Debug("finding user")
-		uu, _ := s.aws.FindUserByEmail(u.PrimaryEmail)
-		if uu != nil {
-			s.users[uu.Username] = uu
+		au, _ := s.aws.FindUserByEmail(gu.PrimaryEmail)
+		if au != nil {
+			s.users[au.Username] = au
 			// Update the user when suspended state is changed
-			if uu.Active == u.Suspended {
+			if au.Active == gu.Suspended {
 				log.Debug("Mismatch active/suspended, updating user")
 				// create new user object and update the user
 				_, err := s.aws.UpdateUser(aws.UpdateUser(
-					uu.ID,
-					u.Name.GivenName,
-					u.Name.FamilyName,
-					u.PrimaryEmail,
-					!u.Suspended))
+					au.ID,
+					gu.Name.GivenName,
+					gu.Name.FamilyName,
+					gu.PrimaryEmail,
+					gu.Suspended))
 				if err != nil {
 					return err
 				}
@@ -138,16 +138,16 @@ func (s *syncGSuite) SyncUsers(query string) error {
 		}
 
 		ll.Info("creating user ")
-		uu, err := s.aws.CreateUser(aws.NewUser(
-			u.Name.GivenName,
-			u.Name.FamilyName,
-			u.PrimaryEmail,
-			!u.Suspended))
+		au, err := s.aws.CreateUser(aws.NewUser(
+			gu.Name.GivenName,
+			gu.Name.FamilyName,
+			gu.PrimaryEmail,
+			!gu.Suspended))
 		if err != nil {
 			return err
 		}
 
-		s.users[uu.Username] = uu
+		s.users[au.Username] = au
 	}
 
 	return nil
