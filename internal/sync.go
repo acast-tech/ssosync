@@ -121,8 +121,9 @@ func (s *syncGSuite) SyncUsers(query string) error {
 		if uu != nil {
 			s.users[uu.Username] = uu
 			// Update the user when suspended state is changed
-			if uu.Active == u.Suspended || uu.Active == u.Archived {
-				log.Debug("Mismatch active/suspended, updating user")
+			if uu.Active == u.Archived {
+				// log.Debug("Mismatch active/suspended, updating user")
+				log.Info("User is archived: %s and Sus: %s , Active: %s", u.Archived, u.Suspended, uu.Active)
 				// create new user object and update the user
 				_, err := s.aws.UpdateUser(aws.UpdateUser(
 					uu.ID,
